@@ -89,45 +89,85 @@ for i in range(len(models)):
     plt.show()
 
 #Train Test split splits a numpy array into 
-#data_list_variables is a list of variables, where each variable is its own numpy array of data that will be used
+#data_list_variables is a list of variables, where each variable is its own numpy array of data that will be used - dependent variable is used at the end
 #perc is the percent of the data we want to use
 #returns a pandas dataframe of the training and test data
 def TrainTestSplit(variablesDataList, perc):
     
     #this concatenates the variables you want into a pandas dataframe
     #each column is a variable
-    data = variablesDataList[i]
+    data = variablesDataList[0]
     for i in range(1, len(variablesDataList)):
-        data = pandas.concat([data, variablesDataList[i]], axis=0)
+        data = pandas.concat([data, variablesDataList[i]], axis=1)
 
-    data = data.shuffle() #shuffles your data into training and test set. THIS MAKES YOUR MSE DIFFERENT EACH TIME
-    return data[:0.8*len(variablesDataList[i])] , data[0.8*len(variablesDataList[i]):]
+    
+    data = data.sample(frac=1) #shuffles your data into training and test set. THIS MAKES YOUR MSE DIFFERENT EACH TIME
+
+    train = data.head(round(perc*len(data.index)))
+    test = data.tail(round((1-perc)*len(data.index)))
+
+    return train, test
+
     #returns training data and testing data
 
-#makes a numpy array of a given degree k from input pandas dataframe
+#makes a numpy array of a given degree k from input pandas dataframe (pandas dataframe includes independent values and dependent values)
 def makeFeatureMatrix(trainingData, k):
     
-    FM = np.array()
+    poly = PolynomialFeatures(degree=k, include_bias=False)
+    keys = trainingData.keys()
 
-    for i in trainingData.keys(): #takes column names
-        
-        x = trainingData.loc[:,i].to_numpy() #Converts column to numpy array
+    FM = poly.fit_transform((trainingData[keys[0]].to_numpy()).reshape(-1, 1))
 
-        #new feature matrix
-        X = []
-        for i in x:
-            newX = []
-            for j in reversed(range(k+1)):
-              newX.append(i**j)
-            X.append(newX)
-    #adds this feature matrix into new feature matrix
-    FM = np.concatenate((FM, X), axis=0)
-    return FM
+    for i in range(1,(len(keys)-1)): #takes column names
 
-#calculates least squares regression from feature matrix and numpy array of test data
-#returns numpy parameters
-def train_model(featureMatrix, yTrain):
-    B = np.linalg.inv(featureMatrix.T @ featureMatrix) @ featureMatrix.T @ yTrain
-    return B
+
+       poly_features = poly.fit_transform((trainingData[keys[i]].to_numpy()).reshape(-1, 1))
+       FM = np.append(FM, poly_features, axis=1)
+    
+    trainingY = (trainingData[keys[len(keys)-1]].to_numpy())
+
+    return FM, trainingY
 
 ##REMEMBER DATATYPES AND MAKE SURE THERES A ONES COLUMN IN FEATURE MATRIX
+
+def normalize():
+    normalize = 0
+
+    return normalized
+
+##THIS IS FOR WEATHER REGRESSION
+
+#BROOKLYN BRIDGE
+
+
+#gets brooklyn bridge data
+num_people = dataset_1['Queensboro Bridge'] + dataset_1['Manhattan Bridge'] + dataset_1['Brooklyn Bridge'] + dataset_1['Williamsburg Bridge'] #number of people (dependent variable)
+
+precipitation = dataset_1['Precipitation'] #independent
+low_temp =  dataset_1['Low Temp'] #independent
+high_temp = dataset_1['High Temp'] #independent
+
+weatherList = [precipitation, low_temp, high_temp, num_people] #list of variables for training and testing split
+perc = 0.9 #percent of data to become training data
+
+trainingData, testingData = TrainTestSplit(weatherList, perc)
+
+
+k = 8
+#Training our model
+trainFeature, trainY = makeFeatureMatrix(trainingData, k) #training set
+testFeature, testY = makeFeatureMatrix(testingData, k) #testing set
+
+poly_reg_model = LinearRegression()
+poly_reg_model.fit(trainFeature, trainY)
+
+#Testing our model
+predict = poly_reg_model.predict(testFeature)
+mse_test = math.mean_squared_error(testY, predict)
+print(f"Test MSE with degree {k} polynomial: {mse_test}")
+
+
+plt.figure(num = 'test one')
+plt.scatter(range(len(testY)), testY)
+plt.scatter(range(len(predict)), predict)
+plt.show()
