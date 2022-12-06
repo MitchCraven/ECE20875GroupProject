@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import sklearn.metrics as math
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.neural_network import MLPClassifier
+from sklearn import preprocessing as pros
+from sklearn.linear_model import LogisticRegression
 ''' 
 The following is the starting code for path1 for data reading to make your first step easier.
 'dataset_1' is the clean data for path1.
@@ -135,14 +138,23 @@ def normalize():
 
     return normalized
 
+def get_day_modle(para):
+    # Split
+    hl_sizes, rand_state, act_func = para
+
+    # Make modle
+    model = MLPClassifier(hidden_layer_sizes=hl_sizes, random_state=rand_state, activation=act_func)
+
+    return model
+
 ##THIS IS FOR WEATHER REGRESSION
 
 #BROOKLYN BRIDGE
 
 
 #gets brooklyn bridge data
-num_people = dataset_1['Queensboro Bridge'] + dataset_1['Manhattan Bridge'] + dataset_1['Brooklyn Bridge'] + dataset_1['Williamsburg Bridge'] #number of people (dependent variable)
 
+num_people = dataset_1['Manhattan Bridge'] + dataset_1['Manhattan Bridge'] + dataset_1['Brooklyn Bridge'] + dataset_1['Williamsburg Bridge'] #number of people (dependent variable)
 precipitation = dataset_1['Precipitation'] #independent
 low_temp =  dataset_1['Low Temp'] #independent
 high_temp = dataset_1['High Temp'] #independent
@@ -152,22 +164,57 @@ perc = 0.9 #percent of data to become training data
 
 trainingData, testingData = TrainTestSplit(weatherList, perc)
 
+past = 1000000000
+for k in range(1, 20):
+    #Training our model
+    trainFeature, trainY = makeFeatureMatrix(trainingData, k) #training set
 
-k = 8
-#Training our model
-trainFeature, trainY = makeFeatureMatrix(trainingData, k) #training set
-testFeature, testY = makeFeatureMatrix(testingData, k) #testing set
+    testFeature, testY = makeFeatureMatrix(testingData, k) #testing set
+    poly_reg_model = LinearRegression()
+    poly_reg_model.fit(trainFeature, trainY)
 
-poly_reg_model = LinearRegression()
-poly_reg_model.fit(trainFeature, trainY)
-
-#Testing our model
-predict = poly_reg_model.predict(testFeature)
-mse_test = math.mean_squared_error(testY, predict)
-print(f"Test MSE with degree {k} polynomial: {mse_test}")
+    #Testing our model
+    predict = poly_reg_model.predict(testFeature)
+    mse_test = math.mean_squared_error(testY, predict)
+    if mse_test < past:
+        past = mse_test
+        deg = k
+print(f"Test MSE with degree {deg} polynomial: {mse_test}")
 
 
 plt.figure(num = 'test one')
 plt.scatter(range(len(testY)), testY)
 plt.scatter(range(len(predict)), predict)
 plt.show()
+
+#Days Question
+shuff = dataset_1.sample(frac=1)
+y = shuff['Day']
+x = shuff['Brooklyn Bridge']
+
+params = [(15, 10), 1, "relu"]
+mod = get_day_modle(params)
+
+# Data Split
+trainX = x.head(round(.9*len(x.index)))
+testX = x.tail(round((1-.9)*len(x.index)))
+trainY = y.head(round(.9*len(y.index)))
+testY = y.tail(round((1-.9)*len(y.index)))
+
+# Reshape
+trainY = trainY.to_numpy().reshape(-1, 1)
+trainX = trainX.to_numpy().reshape(-1, 1)
+testY = testY.to_numpy().reshape(-1, 1)
+testX = testX.to_numpy().reshape(-1, 1)
+#Modle
+
+mod.fit(trainX, trainY.ravel())
+predict = mod.predict(testX)
+print(predict)
+
+
+
+holder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+for i in range(0, 7):
+    trainY[trainY == holder[i]] = i
+    testY[testY == holder[i]] = i
