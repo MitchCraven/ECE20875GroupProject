@@ -128,7 +128,8 @@ def makeFeatureMatrix(trainingData, k):
        poly_features = poly.fit_transform((trainingData[keys[i]].to_numpy()).reshape(-1, 1))
        FM = np.append(FM, poly_features, axis=1)
     
-    trainingY = (trainingData[keys[len(keys)-1]].to_numpy())
+    FM = np.append(FM, np.ones((len(FM), 1)), axis=1)
+    trainingY = (trainingData[keys[len(keys)-1]].to_numpy()).T
 
     return FM, trainingY
 
@@ -215,15 +216,13 @@ for i in [[b, m, q, total], [b, m, w, total], [b, q, w, total], [b, q, w, total]
 
     #training the model
     poly, trainY = makeFeatureMatrix(trainingData, 1)
-    poly_reg_model = LinearRegression()
-    poly_reg_model.fit(poly_features, trainY)
-
+    poly_reg_coeffs = np.linalg.inv(poly.T @ poly) @ poly.T @ trainY
 
     test_p, testY = makeFeatureMatrix(testingData, 1)
-    predict = poly_reg_model.predict(test_features)
+    predict = test_p @ poly_reg_coeffs
     mse_test =  math.mean_squared_error(testY, predict, squared=False)
 
-    print(f"MSE of [{i[0].keys()}, {i[1].keys()}, {i[2].keys()}] : {mse_test}")
+    print(f"MSE of [{i[0].name}, {i[1].name}, {i[2].name}] : {mse_test}")
 
 
 
@@ -243,31 +242,40 @@ precipitation = dataset_1['Precipitation'] #independent
 low_temp =  dataset_1['Low Temp'] #independent
 high_temp = dataset_1['High Temp'] #independent
 
+num_people = (num_people-num_people.mean())/num_people.std()
+precipitation = (precipitation-precipitation.mean())/precipitation.std()
+low_temp = (low_temp-low_temp.mean())/low_temp.std()
+high_temp = (high_temp-high_temp.mean())/high_temp.std()
+
+
 weatherList = [precipitation, low_temp, high_temp, num_people] #list of variables for training and testing split
 perc = 0.8 #percent of data to become training data
 
+print('\n PART 2')
 trainingData, testingData = TrainTestSplit(weatherList, perc)
 
 past = 0
 for k in range(1, 20):
     #Training our model
-    trainFeature, trainY = makeFeatureMatrix(trainingData, k) #training set
+    poly, trainY = makeFeatureMatrix(trainingData, k) #training set
 
-    testFeature, testY = makeFeatureMatrix(testingData, k) #testing set
+    test_p, testY = makeFeatureMatrix(testingData, k) #testing set
     #trainFeature, mean, std = normalize_train(trainFeature)
     #testFeature = normalize_test(testFeature, mean, std)
 
-    poly_reg_model = LinearRegression()
-    poly_reg_model.fit(trainFeature, trainY)
+    poly_reg_coeffs = np.linalg.inv(poly.T @ poly) @ poly.T @ trainY
+
+    predict = test_p @ poly_reg_coeffs
+    mse_test =  math.mean_squared_error(testY, predict, squared=False)
+    print(f"Test MSE with degree {k} polynomial: {mse_test}")
 
     #Testing our model
-    predict = poly_reg_model.predict(testFeature)
     r2 = r2_score(testY, predict)
     if r2 > past:
         past = r2
         deg = k
 
-print(f"Test MSE with degree {deg} polynomial: {r2}")
+print(f"R squared with degree {deg} polynomial: {r2}")
 
 
 plt.figure(num='test one')
