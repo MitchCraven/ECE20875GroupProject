@@ -7,6 +7,8 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.neural_network import MLPClassifier
 from sklearn import preprocessing as pros
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import r2_score
+from sklearn import metrics
 ''' 
 The following is the starting code for path1 for data reading to make your first step easier.
 'dataset_1' is the clean data for path1.
@@ -79,7 +81,6 @@ for i in range(len(array_data)):
             holder = mse_test
             models[i] = poly_reg_model
             degree_out[i] = degrees[j]
-    print(holder)
     titl = ['Brooklyn', 'Manhattan', 'Qeensboro', 'Williamsburg']
 for i in range(len(models)):
     range_x = np.array(list(range(len(brooklyn))))
@@ -89,7 +90,7 @@ for i in range(len(models)):
     plt.figure(num=i)
     plt.scatter(range_x, y)
     plt.scatter(range_x, array_data[i])
-    plt.show()
+    #plt.show()
 
 #Train Test split splits a numpy array into 
 #data_list_variables is a list of variables, where each variable is its own numpy array of data that will be used - dependent variable is used at the end
@@ -104,7 +105,7 @@ def TrainTestSplit(variablesDataList, perc):
         data = pandas.concat([data, variablesDataList[i]], axis=1)
 
     
-    data = data.sample(frac=1) #shuffles your data into training and test set. THIS MAKES YOUR MSE DIFFERENT EACH TIME
+    #data = data.sample(frac=1) #shuffles your data into training and test set. THIS MAKES YOUR MSE DIFFERENT EACH TIME
 
     train = data.head(round(perc*len(data.index)))
     test = data.tail(round((1-perc)*len(data.index)))
@@ -133,10 +134,6 @@ def makeFeatureMatrix(trainingData, k):
 
 ##REMEMBER DATATYPES AND MAKE SURE THERES A ONES COLUMN IN FEATURE MATRIX
 
-def normalize():
-    normalize = 0
-
-    return normalized
 
 def get_day_modle(para):
     # Split
@@ -146,6 +143,50 @@ def get_day_modle(para):
     model = MLPClassifier(hidden_layer_sizes=hl_sizes, random_state=rand_state, activation=act_func)
 
     return model
+def normalize_train(X_train):
+
+    # fill in
+    array = np.array(X_train).T
+    mean = [0] * len(array)
+    std = [0] * len(array)
+
+    for i in range(len(array)):
+        mean[i] = np.mean(array[i])
+        std[i] = np.std(array[i])
+
+    sub_mean = (np.subtract(array.T, mean))
+    X = np.divide(sub_mean, std)
+    return X, mean, std
+def normalize_test(X_test, trn_mean, trn_std):
+
+    # fill in
+    X = np.divide(np.subtract(X_test, trn_mean), trn_std)
+    return X
+def conf_matrix(y_pred, y_true, num_class):
+    """
+    agrs:
+    y_pred : List of predicted classes
+    y_true : List of cooresponding true class labels
+    num_class : The number of distinct classes being predicted
+
+    Returns:
+    M : Confusion matrix as a numpy array with dimensions (num_class, num_class)
+    """
+    # Your code here. We ask that you not use an external libary like sklearn to create the confusion matrix and code this function manually
+    out = np.zeros((num_class, num_class))
+    tot = [0] * num_class
+    no = [0] * num_class
+    for i in range(0, num_class):
+        for j in range(len(y_true)):
+            if (y_pred[j] == y_true[j]) & (y_true[j] == str(i)):
+                tot[i] += 1
+                out[i, i] += 1
+            elif (y_pred[j] != y_true[j]) & (y_true[j] == str(i)):
+                no[i] += 1
+                val = int(y_pred[j])
+                out[val, i] += 1
+    return out
+
 
 ##THIS IS FOR WEATHER REGRESSION
 
@@ -160,57 +201,65 @@ low_temp =  dataset_1['Low Temp'] #independent
 high_temp = dataset_1['High Temp'] #independent
 
 weatherList = [precipitation, low_temp, high_temp, num_people] #list of variables for training and testing split
-perc = 0.9 #percent of data to become training data
+perc = 0.8 #percent of data to become training data
 
 trainingData, testingData = TrainTestSplit(weatherList, perc)
 
-past = 1000000000
+past = 0
 for k in range(1, 20):
     #Training our model
     trainFeature, trainY = makeFeatureMatrix(trainingData, k) #training set
 
     testFeature, testY = makeFeatureMatrix(testingData, k) #testing set
+    #trainFeature, mean, std = normalize_train(trainFeature)
+    #testFeature = normalize_test(testFeature, mean, std)
+
     poly_reg_model = LinearRegression()
     poly_reg_model.fit(trainFeature, trainY)
 
     #Testing our model
     predict = poly_reg_model.predict(testFeature)
-    mse_test = math.mean_squared_error(testY, predict)
-    if mse_test < past:
-        past = mse_test
+    r2 = r2_score(testY, predict)
+    if r2 > past:
+        past = r2
         deg = k
-print(f"Test MSE with degree {deg} polynomial: {mse_test}")
+
+print(f"Test MSE with degree {deg} polynomial: {r2}")
 
 
-plt.figure(num = 'test one')
+plt.figure(num='test one')
 plt.scatter(range(len(testY)), testY)
 plt.scatter(range(len(predict)), predict)
 plt.show()
 
 #Days Question
-shuff = dataset_1.sample(frac=1)
-y = shuff['Day']
-x = shuff['Brooklyn Bridge']
+#shuff = dataset_1.sample(frac=1)
+y = dataset_1['Day']
+x = dataset_1['Manhattan Bridge']
 
-params = [(15, 10), 1, "relu"]
+params = [(10, 15, 7), 1, "relu"]
 mod = get_day_modle(params)
 
 # Data Split
-trainX = x.head(round(.9*len(x.index)))
-testX = x.tail(round((1-.9)*len(x.index)))
-trainY = y.head(round(.9*len(y.index)))
-testY = y.tail(round((1-.9)*len(y.index)))
+trainX = x.head(round(perc*len(x.index)))
+testX = x.tail(round((1-perc)*len(x.index)))
+trainY = y.head(round(perc*len(y.index)))
+testY = y.tail(round((1-perc)*len(y.index)))
+
 
 # Reshape
 trainY = trainY.to_numpy().reshape(-1, 1)
 trainX = trainX.to_numpy().reshape(-1, 1)
 testY = testY.to_numpy().reshape(-1, 1)
 testX = testX.to_numpy().reshape(-1, 1)
-#Modle
 
-mod.fit(trainX, trainY.ravel())
-predict = mod.predict(testX)
-print(predict)
+# Normalize
+gen_trainX, mean, std = normalize_train(trainX)
+gen_testX = normalize_test(testX, mean, std)
+
+#Modle
+mod.fit(gen_trainX, trainY.ravel())
+predict = mod.predict(gen_testX)
 
 
 
@@ -218,3 +267,16 @@ holder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'S
 for i in range(0, 7):
     trainY[trainY == holder[i]] = i
     testY[testY == holder[i]] = i
+    predict[predict == holder[i]] = i
+pred_int = [int(p) for p in predict]
+acc = metrics.accuracy_score(testY.tolist(), pred_int)
+# 5. Calculate the confusion matrix by using the completed the function above
+conf_mat = conf_matrix(testY, predict, 7)
+
+# 6. Compute the AUROC score. You may use metrics.roc_auc_score(...)
+y_score = mod.predict_proba(testX)
+auc_score = metrics.roc_auc_score(testY.tolist(), y_score, multi_class='ovr')
+print(auc_score)
+print(acc)
+
+
