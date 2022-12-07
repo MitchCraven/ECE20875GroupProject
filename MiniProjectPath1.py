@@ -90,7 +90,7 @@ for i in range(len(models)):
     plt.figure(num=i)
     plt.scatter(range_x, y)
     plt.scatter(range_x, array_data[i])
-    #plt.show()
+    plt.show()
 
 #Train Test split splits a numpy array into 
 #data_list_variables is a list of variables, where each variable is its own numpy array of data that will be used - dependent variable is used at the end
@@ -105,7 +105,7 @@ def TrainTestSplit(variablesDataList, perc):
         data = pandas.concat([data, variablesDataList[i]], axis=1)
 
     
-    #data = data.sample(frac=1) #shuffles your data into training and test set. THIS MAKES YOUR MSE DIFFERENT EACH TIME
+    data = data.sample(frac=1) #shuffles your data into training and test set. THIS MAKES YOUR MSE DIFFERENT EACH TIME
 
     train = data.head(round(perc*len(data.index)))
     test = data.tail(round((1-perc)*len(data.index)))
@@ -186,6 +186,49 @@ def conf_matrix(y_pred, y_true, num_class):
                 val = int(y_pred[j])
                 out[val, i] += 1
     return out
+
+#Number of bridges people regression for sensors
+b = dataset_1['Brooklyn Bridge'] #brooklyn bridge numbers
+m = dataset_1['Manhattan Bridge'] #manhattan bridge numbers
+q = dataset_1['Queensboro Bridge'] #queensboro bridge numbers
+w = dataset_1['Williamsburg Bridge'] #williamsburg bridge numbers
+
+#these are y values
+dataset_1['Total'] = b + m + q + w
+total = dataset_1['Total']
+
+#NORMALIZATION BASED ON TOTAL
+mean = total.mean()
+stdev = total.std()
+total = (total - mean)/stdev
+b = (b - mean)/stdev
+m = (m - mean)/stdev
+q = (q - mean)/stdev
+w = (w - mean)/stdev
+
+
+
+perc = 0.8
+for i in [[b, m, q, total], [b, m, w, total], [b, q, w, total], [b, q, w, total]]:
+    #b m q sensors
+    trainingData, testingData = TrainTestSplit(i, perc)
+
+    #training the model
+    poly, trainY = makeFeatureMatrix(trainingData, 1)
+    poly_reg_model = LinearRegression()
+    poly_reg_model.fit(poly_features, trainY)
+
+
+    test_p, testY = makeFeatureMatrix(testingData, 1)
+    predict = poly_reg_model.predict(test_features)
+    mse_test =  math.mean_squared_error(testY, predict, squared=False)
+
+    print(f"MSE of [{i[0].keys()}, {i[1].keys()}, {i[2].keys()}] : {mse_test}")
+
+
+
+
+
 
 
 ##THIS IS FOR WEATHER REGRESSION
