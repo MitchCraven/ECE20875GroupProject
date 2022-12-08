@@ -5,18 +5,15 @@ import sklearn.metrics as math
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.neural_network import MLPClassifier
-from sklearn import preprocessing as pros
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import r2_score, roc_curve
 from sklearn import metrics
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
-
+from sklearn.svm import SVC
 ''' 
 The following is the starting code for path1 for data reading to make your first step easier.
 'dataset_1' is the clean data for path1.
 '''
+# Data In
 dataset_1 = pandas.read_csv('NYC_Bicycle_Counts_2016_Corrected.csv')
 shuffled = dataset_1.to_numpy()
 dataset_1['Brooklyn Bridge']      = pandas.to_numeric(dataset_1['Brooklyn Bridge'].replace(',','', regex=True))
@@ -73,15 +70,18 @@ def makeFeatureMatrix(trainingData, k):
 
 ##REMEMBER DATATYPES AND MAKE SURE THERES A ONES COLUMN IN FEATURE MATRIX
 
-
+# Gets the MPLC, GNB and SVC Models
 def get_day_modle(para):
     # Split
     hl_sizes, rand_state, act_func = para
 
     # Make modle
-    model = MLPClassifier(hidden_layer_sizes=hl_sizes, random_state=rand_state, activation=act_func)
+    model_ner = MLPClassifier(hidden_layer_sizes=hl_sizes, random_state=rand_state, activation=act_func)
+    model_GNB = GaussianNB()
+    model_SVC = SVC(random_state=1, probability=True)
+    return model_ner, model_GNB, model_SVC
 
-    return model
+# Normalized Training Data and outputs the Normalized Data, STD, and Mean
 def normalize_train(X_train):
 
     # fill in
@@ -96,11 +96,15 @@ def normalize_train(X_train):
     sub_mean = (np.subtract(array.T, mean))
     X = np.divide(sub_mean, std)
     return X, mean, std
+
+# Normalizes the Test Data Based on the Test Data
 def normalize_test(X_test, trn_mean, trn_std):
 
     # fill in
     X = np.divide(np.subtract(X_test, trn_mean), trn_std)
     return X
+
+#Makes the conf Matrix
 def conf_matrix(y_pred, y_true, num_class):
     """
     agrs:
@@ -295,16 +299,19 @@ plt.show()
 
 
 
-#Days Question
+# Days Question 3
 print("Part 3")
+# Used to Iterate Through All the Bridges
 titl = ['Brooklyn Bridge', 'Manhattan Bridge', 'Queensboro Bridge', 'Williamsburg Bridge']
 for k in titl:
+
+    # Preparing Data
     shuff = dataset_1.sample(frac=1)
     y = shuff['Day']
     x = shuff[k]
 
     params = [(10, 15, 7), 1, "relu"]
-    mod = get_day_modle(params)
+    model_ner, model_GNB, model_SVC = get_day_modle(params)
 
     # Data Split
     trainX = x.head(round(perc*len(x.index)))
@@ -320,31 +327,60 @@ for k in titl:
     testX = testX.to_numpy().reshape(-1, 1)
 
     # Normalize
-    gen_trainX, mean, std = normalize_train(trainX)
-    gen_testX = normalize_test(testX, mean, std)
+    #gen_trainX, mean, std = normalize_train(trainX)
+    #gen_testX = normalize_test(testX, mean, std)
 
-    #Modle
-    mod.fit(gen_trainX, trainY.ravel())
-    predict = mod.predict(gen_testX)
+    # Neural Model
+    model_ner.fit(trainX, trainY.ravel())
+    predict_ner = model_ner.predict(testX)
 
+    # GNB Model
+    model_GNB.fit(trainX, trainY.ravel())
+    predict_GNB = model_GNB.predict(testX)
 
+    # SVC Model
+    model_SVC.fit(trainX, trainY.ravel())
+    predict_SVC = model_SVC.predict(testX)
 
-    holder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    for i in range(0, 7):
-        trainY[trainY == holder[i]] = i
-        testY[testY == holder[i]] = i
-        predict[predict == holder[i]] = i
-    pred_int = [int(p) for p in predict]
-    acc = metrics.accuracy_score(testY.tolist(), pred_int)
-    # 5. Calculate the confusion matrix by using the completed the function above
-    conf_mat = conf_matrix(testY, predict, 7)
+    # Accuracy Score of Each Model
+    acc_ner = metrics.accuracy_score(testY.tolist(), predict_ner)
+    acc_GNB = metrics.accuracy_score(testY.tolist(), predict_GNB)
+    acc_SVC = metrics.accuracy_score(testY.tolist(), predict_SVC)
 
-    # 6. Compute the AUROC score. You may use metrics.roc_auc_score(...)
-    y_score = mod.predict_proba(testX)
-    auc_score = metrics.roc_auc_score(testY.tolist(), y_score, multi_class='ovr')
+    # Confusion Matrix
+    conf_mat_ner = conf_matrix(testY, predict_ner, 7)
+    conf_mat_GNB = conf_matrix(testY, predict_GNB, 7)
+    conf_mat_SVC = conf_matrix(testY, predict_SVC, 7)
 
-    print(k + " AUC ROC Score: " + str(auc_score))
-    print(k + " Accuracy: " + str(acc))
+    # AUC Neural
+    y_score_ner = model_ner.predict_proba(testX)
+    auc_score_ner = metrics.roc_auc_score(testY.tolist(), y_score_ner, multi_class='ovr')
+
+    # AUC GNB
+    y_score_GNB = model_GNB.predict_proba(testX)
+    auc_score_GNB = metrics.roc_auc_score(testY.tolist(), y_score_GNB, multi_class='ovr')
+
+    # AUC SVC
+    y_score_SVC = model_SVC.predict_proba(testX)
+    auc_score_SVC = metrics.roc_auc_score(testY.tolist(), y_score_SVC, multi_class='ovr')
+
+    # Graph AUROC
+    #false_positive_rate1, true_positive_rate1, threshold1 = roc_curve(testY, y_score_GNB)
+
+    # Prints Results of Neural Network
+    print(k + " AUC ROC Score Multi-Layer Neural: " + str(auc_score_ner))
+    print(k + " Accuracy Multi-layer Nural: " + str(acc_ner))
+    print()
+
+    # Prints Results of GNB
+    print(k + " AUC ROC Score GNB: " + str(auc_score_GNB))
+    print(k + " Accuracy GNB: " + str(acc_GNB))
+    print()
+
+    # Prints Results of SVC
+    print(k + " AUC ROC Score SVC: " + str(auc_score_SVC))
+    print(k + " Accuracy SVC: " + str(acc_SVC))
+    print()
 
 
 
