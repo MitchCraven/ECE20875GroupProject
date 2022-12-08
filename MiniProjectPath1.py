@@ -24,73 +24,7 @@ dataset_1['Low Temp']  = pandas.to_numeric(dataset_1['Low Temp'].replace(',','',
 dataset_1['Precipitation']  = pandas.to_numeric(dataset_1['Precipitation'].replace(',','', regex=True))
 #print(shuffled.to_string()) #This line will print out your data
 
-# Break Down and Fix
-##Convert to numpy arrays
-brooklyn = dataset_1['Brooklyn Bridge']
-brooklyn = brooklyn.to_numpy()
 
-manhattan = dataset_1['Manhattan Bridge']
-manhattan = manhattan.to_numpy()
-
-qeensboro = dataset_1['Queensboro Bridge']
-qeensboro = qeensboro.to_numpy()
-
-williamsburg = dataset_1['Williamsburg Bridge']
-williamsburg = williamsburg.to_numpy()
-
-high_temp = dataset_1['High Temp']
-high_temp = high_temp.to_numpy()
-
-low_temp = dataset_1['Low Temp']
-low_temp = low_temp.to_numpy()
-
-precipitation = dataset_1['Precipitation']
-precipitation = precipitation.to_numpy()
-
-day = dataset_1['Day']
-day = day.to_numpy()
-
-date = dataset_1['Date']
-date = date.to_numpy()
-
-array_data = [brooklyn, manhattan, qeensboro, williamsburg]
-array_atr = [low_temp, high_temp, precipitation, day]
-avg_temp = np.divide((low_temp + high_temp), 2)
-
-# We are using 80% data for training.
-degrees = [1, 2, 3, 4, 5, 6, 7]
-a_list = np.array(list(range(1, round(len(brooklyn) * 0.8) + 1))) #First 80% of data
-a_lis = np.array(list(range(round(len(brooklyn) * 0.8), len(brooklyn)))) #last 20% of data
-predict = [0] * len(degrees)
-models = [0] * len(array_data)
-degree_out = [0] * len(array_data)
-for i in range(len(array_data)):
-    holder = 1000000000000
-    train = array_data[i][:(int((len(array_data[i])*0.8)))]
-    test = array_data[i][(int((len(array_data[i])*0.8))):]
-    for j in range(len(degrees)):
-        poly = PolynomialFeatures(degree=degrees[j], include_bias=False)
-        poly_features = poly.fit_transform(a_list.reshape(-1, 1))
-        poly_reg_model = LinearRegression()
-        poly_reg_model.fit(poly_features, train)
-        test_p = PolynomialFeatures(degree=degrees[j], include_bias=False)
-        test_features = test_p.fit_transform(a_lis.reshape(-1, 1))
-        predict[j] = poly_reg_model.predict(test_features)
-        mse_test = math.mean_squared_error(test, predict[j])
-        if mse_test < holder:
-            holder = mse_test
-            models[i] = poly_reg_model
-            degree_out[i] = degrees[j]
-    titl = ['Brooklyn', 'Manhattan', 'Qeensboro', 'Williamsburg']
-for i in range(len(models)):
-    range_x = np.array(list(range(len(brooklyn))))
-    set = PolynomialFeatures(degree=degree_out[i], include_bias=False)
-    features = set.fit_transform(range_x.reshape(-1, 1))
-    y = models[i].predict(features)
-    plt.figure(num=i)
-    plt.scatter(range_x, y)
-    plt.scatter(range_x, array_data[i])
-    plt.show()
 
 #Train Test split splits a numpy array into 
 #data_list_variables is a list of variables, where each variable is its own numpy array of data that will be used - dependent variable is used at the end
@@ -208,8 +142,9 @@ q = (q - mean)/stdev
 w = (w - mean)/stdev
 
 
-
+print('\n PART 1')
 perc = 0.8
+
 for i in [[b, m, q, total], [b, m, w, total], [b, q, w, total], [b, q, w, total]]:
     #b m q sensors
     trainingData, testingData = TrainTestSplit(i, perc)
@@ -223,12 +158,33 @@ for i in [[b, m, q, total], [b, m, w, total], [b, q, w, total], [b, q, w, total]
     mse_test =  math.mean_squared_error(testY, predict, squared=False)
 
     print(f"MSE of [{i[0].name}, {i[1].name}, {i[2].name}] : {mse_test}")
+    
+    #we plotted the three bridges we were putting sensors on
+    #plot first bridge
+    plt.title(f"Model with Sensors on {i[0].name}, {i[1].name}, {i[2].name}", fontsize = 16)
+    plt.subplot(311)
+    plt.scatter(((testingData[i[0].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs {i[0].name}')
+    plt.scatter(((testingData[i[0].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs {i[0].name}')
+    plt.xlabel('Total People', fontsize=12)
+    plt.ylabel(f'{i[0].name} People', fontsize=12)
+    plt.legend(fontsize=10, loc='upper left')
 
+    #pot second bridge
+    plt.subplot(312)
+    plt.scatter(((testingData[i[1].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs {i[1].name}')
+    plt.scatter(((testingData[i[1].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs {i[1].name}')
+    plt.xlabel('Total People', fontsize=12)
+    plt.ylabel(f'{i[1].name} People', fontsize=12)
+    plt.legend(fontsize=10, loc='upper left')
 
-
-
-
-
+    #Plot third bridge
+    plt.subplot(313)
+    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs {i[2].name}')
+    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs {i[2].name}')
+    plt.xlabel('Total People', fontsize=12)
+    plt.ylabel(f'{i[2].name} People', fontsize=12)
+    plt.legend(fontsize=10, loc='upper left')
+    plt.show()
 
 ##THIS IS FOR WEATHER REGRESSION
 
@@ -242,9 +198,21 @@ precipitation = dataset_1['Precipitation'] #independent
 low_temp =  dataset_1['Low Temp'] #independent
 high_temp = dataset_1['High Temp'] #independent
 
+#normalizes all data
+npMean = num_people.mean()
+npStd = num_people.std()
 num_people = (num_people-num_people.mean())/num_people.std()
+
+precMean = precipitation.mean()
+precStd = precipitation.std()
 precipitation = (precipitation-precipitation.mean())/precipitation.std()
+
+ltMean = low_temp.mean()
+ltStd = low_temp.std()
 low_temp = (low_temp-low_temp.mean())/low_temp.std()
+
+htMean = high_temp.mean()
+htStd = high_temp.std()
 high_temp = (high_temp-high_temp.mean())/high_temp.std()
 
 
@@ -255,7 +223,7 @@ print('\n PART 2')
 trainingData, testingData = TrainTestSplit(weatherList, perc)
 
 past = 0
-for k in range(1, 20):
+for k in range(1, 9):
     #Training our model
     poly, trainY = makeFeatureMatrix(trainingData, k) #training set
 
@@ -265,9 +233,40 @@ for k in range(1, 20):
 
     poly_reg_coeffs = np.linalg.inv(poly.T @ poly) @ poly.T @ trainY
 
+    #make predictions
     predict = test_p @ poly_reg_coeffs
     mse_test =  math.mean_squared_error(testY, predict, squared=False)
     print(f"Test MSE with degree {k} polynomial: {mse_test}")
+
+    #we plotted the three bridges we were putting sensors on
+    #plot Precipitation
+    plt.title(f"Precipitation, High Temp, Low Temp, vs Total", fontsize = 16)
+    plt.subplot(311)
+    plt.scatter(((testingData['Precipitation']+precMean)*precStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs Precipitation')
+    plt.scatter(((testingData['Precipitation']+precMean)*precStdtestingData['Precipitation']+precMean)*precStd), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs Precipitation')
+    plt.xlabel('Total People', fontsize=12)
+    plt.ylabel(f'{i[0].name} People', fontsize=12)
+    plt.legend(fontsize=10, loc='upper left')
+
+    #pot second bridge
+    plt.subplot(312)
+    plt.scatter(((testingData['High Temp']+htMean)*htStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs High Temp')
+    plt.scatter(((testingData[i[0].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs High Temp')
+    plt.xlabel('Total People', fontsize=12)
+    plt.ylabel(f'{i[0].name} People', fontsize=12)
+    plt.legend(fontsize=10, loc='upper left')
+
+    #Plot third bridge
+    plt.subplot(313)
+    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs Low Temp')
+    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs Low Temp')
+    plt.xlabel('Total People', fontsize=12)
+    plt.ylabel(f'{i[2].name} People', fontsize=12)
+    plt.legend(fontsize=10, loc='upper left')
+    plt.show()
+
+
+
 
     #Testing our model
     r2 = r2_score(testY, predict)
@@ -282,6 +281,15 @@ plt.figure(num='test one')
 plt.scatter(range(len(testY)), testY)
 plt.scatter(range(len(predict)), predict)
 plt.show()
+
+
+
+
+
+
+
+
+
 
 #Days Question
 #shuff = dataset_1.sample(frac=1)
@@ -331,3 +339,72 @@ print(auc_score)
 print(acc)
 
 
+
+##MISC## Or Unused
+# Break Down and Fix
+##Convert to numpy arrays
+brooklyn = dataset_1['Brooklyn Bridge']
+brooklyn = brooklyn.to_numpy()
+
+manhattan = dataset_1['Manhattan Bridge']
+manhattan = manhattan.to_numpy()
+
+qeensboro = dataset_1['Queensboro Bridge']
+qeensboro = qeensboro.to_numpy()
+
+williamsburg = dataset_1['Williamsburg Bridge']
+williamsburg = williamsburg.to_numpy()
+
+high_temp = dataset_1['High Temp']
+high_temp = high_temp.to_numpy()
+
+low_temp = dataset_1['Low Temp']
+low_temp = low_temp.to_numpy()
+
+precipitation = dataset_1['Precipitation']
+precipitation = precipitation.to_numpy()
+
+day = dataset_1['Day']
+day = day.to_numpy()
+
+date = dataset_1['Date']
+date = date.to_numpy()
+
+array_data = [brooklyn, manhattan, qeensboro, williamsburg]
+array_atr = [low_temp, high_temp, precipitation, day]
+avg_temp = np.divide((low_temp + high_temp), 2)
+
+# We are using 80% data for training.
+degrees = [1, 2, 3, 4, 5, 6, 7]
+a_list = np.array(list(range(1, round(len(brooklyn) * 0.8) + 1))) #First 80% of data
+a_lis = np.array(list(range(round(len(brooklyn) * 0.8), len(brooklyn)))) #last 20% of data
+predict = [0] * len(degrees)
+models = [0] * len(array_data)
+degree_out = [0] * len(array_data)
+for i in range(len(array_data)):
+    holder = 1000000000000
+    train = array_data[i][:(int((len(array_data[i])*0.8)))]
+    test = array_data[i][(int((len(array_data[i])*0.8))):]
+    for j in range(len(degrees)):
+        poly = PolynomialFeatures(degree=degrees[j], include_bias=False)
+        poly_features = poly.fit_transform(a_list.reshape(-1, 1))
+        poly_reg_model = LinearRegression()
+        poly_reg_model.fit(poly_features, train)
+        test_p = PolynomialFeatures(degree=degrees[j], include_bias=False)
+        test_features = test_p.fit_transform(a_lis.reshape(-1, 1))
+        predict[j] = poly_reg_model.predict(test_features)
+        mse_test = math.mean_squared_error(test, predict[j])
+        if mse_test < holder:
+            holder = mse_test
+            models[i] = poly_reg_model
+            degree_out[i] = degrees[j]
+    titl = ['Brooklyn', 'Manhattan', 'Qeensboro', 'Williamsburg']
+for i in range(len(models)):
+    range_x = np.array(list(range(len(brooklyn))))
+    set = PolynomialFeatures(degree=degree_out[i], include_bias=False)
+    features = set.fit_transform(range_x.reshape(-1, 1))
+    y = models[i].predict(features)
+    plt.figure(num=i)
+    plt.scatter(range_x, y)
+    plt.scatter(range_x, array_data[i])
+    plt.show()
