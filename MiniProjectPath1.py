@@ -240,28 +240,28 @@ for k in range(1, 9):
 
     #we plotted the three bridges we were putting sensors on
     #plot Precipitation
-    plt.title(f"Precipitation, High Temp, Low Temp, vs Total", fontsize = 16)
+    plt.title(f"Precipitation, High Temp, Low Temp, vs Total", fontsize = 20)
     plt.subplot(311)
     plt.scatter(((testingData['Precipitation']+precMean)*precStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs Precipitation')
-    plt.scatter(((testingData['Precipitation']+precMean)*precStdtestingData['Precipitation']+precMean)*precStd), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs Precipitation')
-    plt.xlabel('Total People', fontsize=12)
-    plt.ylabel(f'{i[0].name} People', fontsize=12)
+    plt.scatter(((testingData['Precipitation']+precMean)*precStd), ((predict+npMean)*npStd), color="blue", label=f'Predicted Total vs Precipitation')
+    plt.xlabel('Precipitation', fontsize=12)
+    plt.ylabel(f'Total People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
 
-    #pot second bridge
+    #pot high temp
     plt.subplot(312)
     plt.scatter(((testingData['High Temp']+htMean)*htStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs High Temp')
-    plt.scatter(((testingData[i[0].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs High Temp')
-    plt.xlabel('Total People', fontsize=12)
-    plt.ylabel(f'{i[0].name} People', fontsize=12)
+    plt.scatter(((testingData['High Temp']+htMean)*htStd), ((predict+npMean)*npStd), color="blue", label=f'Predicted Total vs High Temp')
+    plt.xlabel('High Temp', fontsize=12)
+    plt.ylabel(f'Total People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
 
-    #Plot third bridge
+    #Plot low temp
     plt.subplot(313)
-    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs Low Temp')
-    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs Low Temp')
-    plt.xlabel('Total People', fontsize=12)
-    plt.ylabel(f'{i[2].name} People', fontsize=12)
+    plt.scatter(((testingData['Low Temp']+ltMean)*ltStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs Low Temp')
+    plt.scatter(((testingData['Low Temp']+ltMean)*ltStd), ((predict+npMean)*npStd), color="blue", label=f'Predicted Total vs Low Temp')
+    plt.xlabel('Low Temp', fontsize=12)
+    plt.ylabel(f'Total People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
     plt.show()
 
