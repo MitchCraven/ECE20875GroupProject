@@ -7,8 +7,12 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.neural_network import MLPClassifier
 from sklearn import preprocessing as pros
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, roc_curve
 from sklearn import metrics
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+
 ''' 
 The following is the starting code for path1 for data reading to make your first step easier.
 'dataset_1' is the clean data for path1.
@@ -292,51 +296,55 @@ plt.show()
 
 
 #Days Question
-#shuff = dataset_1.sample(frac=1)
-y = dataset_1['Day']
-x = dataset_1['Manhattan Bridge']
+print("Part 3")
+titl = ['Brooklyn Bridge', 'Manhattan Bridge', 'Queensboro Bridge', 'Williamsburg Bridge']
+for k in titl:
+    shuff = dataset_1.sample(frac=1)
+    y = shuff['Day']
+    x = shuff[k]
 
-params = [(10, 15, 7), 1, "relu"]
-mod = get_day_modle(params)
+    params = [(10, 15, 7), 1, "relu"]
+    mod = get_day_modle(params)
 
-# Data Split
-trainX = x.head(round(perc*len(x.index)))
-testX = x.tail(round((1-perc)*len(x.index)))
-trainY = y.head(round(perc*len(y.index)))
-testY = y.tail(round((1-perc)*len(y.index)))
-
-
-# Reshape
-trainY = trainY.to_numpy().reshape(-1, 1)
-trainX = trainX.to_numpy().reshape(-1, 1)
-testY = testY.to_numpy().reshape(-1, 1)
-testX = testX.to_numpy().reshape(-1, 1)
-
-# Normalize
-gen_trainX, mean, std = normalize_train(trainX)
-gen_testX = normalize_test(testX, mean, std)
-
-#Modle
-mod.fit(gen_trainX, trainY.ravel())
-predict = mod.predict(gen_testX)
+    # Data Split
+    trainX = x.head(round(perc*len(x.index)))
+    testX = x.tail(round((1-perc)*len(x.index)))
+    trainY = y.head(round(perc*len(y.index)))
+    testY = y.tail(round((1-perc)*len(y.index)))
 
 
+    # Reshape
+    trainY = trainY.to_numpy().reshape(-1, 1)
+    trainX = trainX.to_numpy().reshape(-1, 1)
+    testY = testY.to_numpy().reshape(-1, 1)
+    testX = testX.to_numpy().reshape(-1, 1)
 
-holder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-for i in range(0, 7):
-    trainY[trainY == holder[i]] = i
-    testY[testY == holder[i]] = i
-    predict[predict == holder[i]] = i
-pred_int = [int(p) for p in predict]
-acc = metrics.accuracy_score(testY.tolist(), pred_int)
-# 5. Calculate the confusion matrix by using the completed the function above
-conf_mat = conf_matrix(testY, predict, 7)
+    # Normalize
+    gen_trainX, mean, std = normalize_train(trainX)
+    gen_testX = normalize_test(testX, mean, std)
 
-# 6. Compute the AUROC score. You may use metrics.roc_auc_score(...)
-y_score = mod.predict_proba(testX)
-auc_score = metrics.roc_auc_score(testY.tolist(), y_score, multi_class='ovr')
-print(auc_score)
-print(acc)
+    #Modle
+    mod.fit(gen_trainX, trainY.ravel())
+    predict = mod.predict(gen_testX)
+
+
+
+    holder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    for i in range(0, 7):
+        trainY[trainY == holder[i]] = i
+        testY[testY == holder[i]] = i
+        predict[predict == holder[i]] = i
+    pred_int = [int(p) for p in predict]
+    acc = metrics.accuracy_score(testY.tolist(), pred_int)
+    # 5. Calculate the confusion matrix by using the completed the function above
+    conf_mat = conf_matrix(testY, predict, 7)
+
+    # 6. Compute the AUROC score. You may use metrics.roc_auc_score(...)
+    y_score = mod.predict_proba(testX)
+    auc_score = metrics.roc_auc_score(testY.tolist(), y_score, multi_class='ovr')
+
+    print(k + " AUC ROC Score: " + str(auc_score))
+    print(k + " Accuracy: " + str(acc))
 
 
 
