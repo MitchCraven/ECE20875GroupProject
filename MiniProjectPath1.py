@@ -5,10 +5,10 @@ import sklearn.metrics as math
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.neural_network import MLPClassifier
-from sklearn import preprocessing as pros
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, roc_curve
 from sklearn import metrics
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
 ''' 
 The following is the starting code for path1 for data reading to make your first step easier.
 'dataset_1' is the clean data for path1.
@@ -70,14 +70,17 @@ def makeFeatureMatrix(trainingData, k):
 ##REMEMBER DATATYPES AND MAKE SURE THERES A ONES COLUMN IN FEATURE MATRIX
 
 
+# Gets the MPLC, GNB and SVC Models
 def get_day_modle(para):
     # Split
     hl_sizes, rand_state, act_func = para
 
     # Make modle
-    model = MLPClassifier(hidden_layer_sizes=hl_sizes, random_state=rand_state, activation=act_func)
+    model_ner = MLPClassifier(hidden_layer_sizes=hl_sizes, random_state=rand_state, activation=act_func)
+    model_GNB = GaussianNB()
+    model_SVC = SVC(random_state=1, probability=True)
+    return model_ner, model_GNB, model_SVC
 
-    return model
 def normalize_train(X_train):
 
     # fill in
@@ -163,26 +166,26 @@ for i in [[b, m, q, total], [b, m, w, total], [b, q, w, total], [b, q, w, total]
     #plot first bridge
     plt.title(f"Model with Sensors on {i[0].name}, {i[1].name}, {i[2].name}", fontsize = 16)
     plt.subplot(311)
-    plt.scatter(((testingData[i[0].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs {i[0].name}')
-    plt.scatter(((testingData[i[0].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs {i[0].name}')
-    plt.xlabel('Total People', fontsize=12)
-    plt.ylabel(f'{i[0].name} People', fontsize=12)
+    plt.scatter(((testingData[i[0].name]*stdev)+mean), ((testY)*stdev+mean), color="Black", label=f'Total vs {i[0].name}')
+    plt.scatter(((testingData[i[0].name]*stdev)+mean), ((predict)*stdev+mean), color="Red", label=f'Predicted Total vs {i[0].name}')
+    plt.ylabel('Total People', fontsize=12)
+    plt.xlabel(f'{i[0].name} People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
 
     #pot second bridge
     plt.subplot(312)
-    plt.scatter(((testingData[i[1].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs {i[1].name}')
-    plt.scatter(((testingData[i[1].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs {i[1].name}')
-    plt.xlabel('Total People', fontsize=12)
-    plt.ylabel(f'{i[1].name} People', fontsize=12)
+    plt.scatter(((testingData[i[1].name]*stdev)+mean), ((testY)*stdev+mean), color="Black", label=f'Total vs {i[1].name}')
+    plt.scatter(((testingData[i[1].name]*stdev)+mean), ((predict)*stdev+mean), color="Red", label=f'Predicted Total vs {i[1].name}')
+    plt.ylabel('Total People', fontsize=12)
+    plt.xlabel(f'{i[1].name} People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
 
     #Plot third bridge
     plt.subplot(313)
-    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((testY+mean)*stdev), color="Black", label=f'Total vs {i[2].name}')
-    plt.scatter(((testingData[i[2].name]+mean)*stdev), ((predict+mean)*stdev), color="Red", label=f'Predicted Total vs {i[2].name}')
-    plt.xlabel('Total People', fontsize=12)
-    plt.ylabel(f'{i[2].name} People', fontsize=12)
+    plt.scatter(((testingData[i[2].name]*stdev)+mean), ((testY)*stdev+mean), color="Black", label=f'Total vs {i[2].name}')
+    plt.scatter(((testingData[i[2].name]*stdev)+mean), ((predict)*stdev+mean), color="Red", label=f'Predicted Total vs {i[2].name}')
+    plt.ylabel('Total People', fontsize=12)
+    plt.xlabel(f'{i[2].name} People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
     plt.show()
 
@@ -242,24 +245,24 @@ for k in range(1, 9):
     #plot Precipitation
     plt.title(f"Precipitation, High Temp, Low Temp, vs Total", fontsize = 20)
     plt.subplot(311)
-    plt.scatter(((testingData['Precipitation']+precMean)*precStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs Precipitation')
-    plt.scatter(((testingData['Precipitation']+precMean)*precStd), ((predict+npMean)*npStd), color="blue", label=f'Predicted Total vs Precipitation')
+    plt.scatter(((testingData['Precipitation']*precStd)+precMean), ((testY*npStd)+npMean), color="Black", label=f'Total vs Precipitation')
+    plt.scatter(((testingData['Precipitation']*precStd)+precMean), ((predict*npStd)+npMean), color="blue", label=f'Predicted Total vs Precipitation')
     plt.xlabel('Precipitation', fontsize=12)
     plt.ylabel(f'Total People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
 
     #pot high temp
     plt.subplot(312)
-    plt.scatter(((testingData['High Temp']+htMean)*htStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs High Temp')
-    plt.scatter(((testingData['High Temp']+htMean)*htStd), ((predict+npMean)*npStd), color="blue", label=f'Predicted Total vs High Temp')
+    plt.scatter(((testingData['High Temp']*htStd)+htMean), ((testY*npStd)+npMean), color="Black", label=f'Total vs High Temp')
+    plt.scatter(((testingData['High Temp']*htStd)+htMean), ((predict*npStd)+npMean), color="blue", label=f'Predicted Total vs High Temp')
     plt.xlabel('High Temp', fontsize=12)
     plt.ylabel(f'Total People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
 
     #Plot low temp
     plt.subplot(313)
-    plt.scatter(((testingData['Low Temp']+ltMean)*ltStd), ((testY+npMean)*npStd), color="Black", label=f'Total vs Low Temp')
-    plt.scatter(((testingData['Low Temp']+ltMean)*ltStd), ((predict+npMean)*npStd), color="blue", label=f'Predicted Total vs Low Temp')
+    plt.scatter(((testingData['Low Temp']*ltStd)+ltMean), ((testY*npStd)+npMean), color="Black", label=f'Total vs Low Temp')
+    plt.scatter(((testingData['Low Temp']*ltStd)+ltMean), ((predict*npStd)+npMean), color="blue", label=f'Predicted Total vs Low Temp')
     plt.xlabel('Low Temp', fontsize=12)
     plt.ylabel(f'Total People', fontsize=12)
     plt.legend(fontsize=10, loc='upper left')
@@ -277,66 +280,93 @@ for k in range(1, 9):
 print(f"R squared with degree {deg} polynomial: {r2}")
 
 
-plt.figure(num='test one')
-plt.scatter(range(len(testY)), testY)
-plt.scatter(range(len(predict)), predict)
-plt.show()
 
 
 
 
 
+# Days Question 3
+print("Part 3")
+# Used to Iterate Through All the Bridges
+titl = ['Brooklyn Bridge', 'Manhattan Bridge', 'Queensboro Bridge', 'Williamsburg Bridge']
+for k in titl:
+
+    # Preparing Data
+    shuff = dataset_1.sample(frac=1)
+    y = shuff['Day']
+    x = shuff[k]
+
+    params = [(10, 15, 7), 1, "relu"]
+    model_ner, model_GNB, model_SVC = get_day_modle(params)
+
+    # Data Split
+    trainX = x.head(round(perc*len(x.index)))
+    testX = x.tail(round((1-perc)*len(x.index)))
+    trainY = y.head(round(perc*len(y.index)))
+    testY = y.tail(round((1-perc)*len(y.index)))
 
 
+    # Reshape
+    trainY = trainY.to_numpy().reshape(-1, 1)
+    trainX = trainX.to_numpy().reshape(-1, 1)
+    testY = testY.to_numpy().reshape(-1, 1)
+    testX = testX.to_numpy().reshape(-1, 1)
 
+    # Normalize
+    #gen_trainX, mean, std = normalize_train(trainX)
+    #gen_testX = normalize_test(testX, mean, std)
 
+    # Neural Model
+    model_ner.fit(trainX, trainY.ravel())
+    predict_ner = model_ner.predict(testX)
 
-#Days Question
-#shuff = dataset_1.sample(frac=1)
-y = dataset_1['Day']
-x = dataset_1['Manhattan Bridge']
+    # GNB Model
+    model_GNB.fit(trainX, trainY.ravel())
+    predict_GNB = model_GNB.predict(testX)
 
-params = [(10, 15, 7), 1, "relu"]
-mod = get_day_modle(params)
+    # SVC Model
+    model_SVC.fit(trainX, trainY.ravel())
+    predict_SVC = model_SVC.predict(testX)
 
-# Data Split
-trainX = x.head(round(perc*len(x.index)))
-testX = x.tail(round((1-perc)*len(x.index)))
-trainY = y.head(round(perc*len(y.index)))
-testY = y.tail(round((1-perc)*len(y.index)))
+    # Accuracy Score of Each Model
+    acc_ner = metrics.accuracy_score(testY.tolist(), predict_ner)
+    acc_GNB = metrics.accuracy_score(testY.tolist(), predict_GNB)
+    acc_SVC = metrics.accuracy_score(testY.tolist(), predict_SVC)
 
+    # Confusion Matrix
+    conf_mat_ner = conf_matrix(testY, predict_ner, 7)
+    conf_mat_GNB = conf_matrix(testY, predict_GNB, 7)
+    conf_mat_SVC = conf_matrix(testY, predict_SVC, 7)
 
-# Reshape
-trainY = trainY.to_numpy().reshape(-1, 1)
-trainX = trainX.to_numpy().reshape(-1, 1)
-testY = testY.to_numpy().reshape(-1, 1)
-testX = testX.to_numpy().reshape(-1, 1)
+    # AUC Neural
+    y_score_ner = model_ner.predict_proba(testX)
+    auc_score_ner = metrics.roc_auc_score(testY.tolist(), y_score_ner, multi_class='ovr')
 
-# Normalize
-gen_trainX, mean, std = normalize_train(trainX)
-gen_testX = normalize_test(testX, mean, std)
+    # AUC GNB
+    y_score_GNB = model_GNB.predict_proba(testX)
+    auc_score_GNB = metrics.roc_auc_score(testY.tolist(), y_score_GNB, multi_class='ovr')
 
-#Modle
-mod.fit(gen_trainX, trainY.ravel())
-predict = mod.predict(gen_testX)
+    # AUC SVC
+    y_score_SVC = model_SVC.predict_proba(testX)
+    auc_score_SVC = metrics.roc_auc_score(testY.tolist(), y_score_SVC, multi_class='ovr')
 
+    # Graph AUROC
+    #false_positive_rate1, true_positive_rate1, threshold1 = roc_curve(testY, y_score_GNB)
 
+    # Prints Results of Neural Network
+    print(k + " AUC ROC Score Multi-Layer Neural: " + str(auc_score_ner))
+    print(k + " Accuracy Multi-layer Nural: " + str(acc_ner))
+    print()
 
-holder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-for i in range(0, 7):
-    trainY[trainY == holder[i]] = i
-    testY[testY == holder[i]] = i
-    predict[predict == holder[i]] = i
-pred_int = [int(p) for p in predict]
-acc = metrics.accuracy_score(testY.tolist(), pred_int)
-# 5. Calculate the confusion matrix by using the completed the function above
-conf_mat = conf_matrix(testY, predict, 7)
+    # Prints Results of GNB
+    print(k + " AUC ROC Score GNB: " + str(auc_score_GNB))
+    print(k + " Accuracy GNB: " + str(acc_GNB))
+    print()
 
-# 6. Compute the AUROC score. You may use metrics.roc_auc_score(...)
-y_score = mod.predict_proba(testX)
-auc_score = metrics.roc_auc_score(testY.tolist(), y_score, multi_class='ovr')
-print(auc_score)
-print(acc)
+    # Prints Results of SVC
+    print(k + " AUC ROC Score SVC: " + str(auc_score_SVC))
+    print(k + " Accuracy SVC: " + str(acc_SVC))
+    print()
 
 
 
