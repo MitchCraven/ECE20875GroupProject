@@ -70,10 +70,6 @@ def makeFeatureMatrix(trainingData, k):
 
 ##REMEMBER DATATYPES AND MAKE SURE THERES A ONES COLUMN IN FEATURE MATRIX
 
-<<<<<<< HEAD
-
-=======
->>>>>>> cf7c9209de4659528f70ab2651daa25f33e6b054
 # Gets the MPLC, GNB and SVC Models
 def get_day_modle(para):
     # Split
@@ -85,10 +81,6 @@ def get_day_modle(para):
     model_SVC = SVC(random_state=1, probability=True)
     return model_ner, model_GNB, model_SVC
 
-<<<<<<< HEAD
-=======
-# Normalized Training Data and outputs the Normalized Data, STD, and Mean
->>>>>>> cf7c9209de4659528f70ab2651daa25f33e6b054
 def normalize_train(X_train):
 
     # fill in
@@ -332,87 +324,6 @@ for k in titl:
     model_ner.fit(trainX, trainY.ravel())
     predict_ner = model_ner.predict(testX)
 
-<<<<<<< HEAD
-    # GNB Model
-    model_GNB.fit(trainX, trainY.ravel())
-    predict_GNB = model_GNB.predict(testX)
-
-    # SVC Model
-    model_SVC.fit(trainX, trainY.ravel())
-    predict_SVC = model_SVC.predict(testX)
-
-    # Accuracy Score of Each Model
-    acc_ner = metrics.accuracy_score(testY.tolist(), predict_ner)
-    acc_GNB = metrics.accuracy_score(testY.tolist(), predict_GNB)
-    acc_SVC = metrics.accuracy_score(testY.tolist(), predict_SVC)
-=======
-# Days Question 3
-print("Part 3")
-# Used to Iterate Through All the Bridges
-titl = ['Brooklyn Bridge', 'Manhattan Bridge', 'Queensboro Bridge', 'Williamsburg Bridge']
-for k in titl:
-
-    # Preparing Data
-    shuff = dataset_1.sample(frac=1)
-    y = shuff['Day']
-    x = shuff[k]
-
-    params = [(10, 15, 7), 1, "relu"]
-    model_ner, model_GNB, model_SVC = get_day_modle(params)
-
-    # Data Split
-    trainX = x.head(round(perc*len(x.index)))
-    testX = x.tail(round((1-perc)*len(x.index)))
-    trainY = y.head(round(perc*len(y.index)))
-    testY = y.tail(round((1-perc)*len(y.index)))
->>>>>>> cf7c9209de4659528f70ab2651daa25f33e6b054
-
-    # Confusion Matrix
-    conf_mat_ner = conf_matrix(testY, predict_ner, 7)
-    conf_mat_GNB = conf_matrix(testY, predict_GNB, 7)
-    conf_mat_SVC = conf_matrix(testY, predict_SVC, 7)
-
-<<<<<<< HEAD
-    # AUC Neural
-    y_score_ner = model_ner.predict_proba(testX)
-    auc_score_ner = metrics.roc_auc_score(testY.tolist(), y_score_ner, multi_class='ovr')
-
-    # AUC GNB
-    y_score_GNB = model_GNB.predict_proba(testX)
-    auc_score_GNB = metrics.roc_auc_score(testY.tolist(), y_score_GNB, multi_class='ovr')
-
-    # AUC SVC
-    y_score_SVC = model_SVC.predict_proba(testX)
-    auc_score_SVC = metrics.roc_auc_score(testY.tolist(), y_score_SVC, multi_class='ovr')
-
-    # Graph AUROC
-    #false_positive_rate1, true_positive_rate1, threshold1 = roc_curve(testY, y_score_GNB)
-
-    # Prints Results of Neural Network
-    print(k + " AUC ROC Score Multi-Layer Neural: " + str(auc_score_ner))
-    print(k + " Accuracy Multi-layer Nural: " + str(acc_ner))
-    print()
-
-    # Prints Results of GNB
-    print(k + " AUC ROC Score GNB: " + str(auc_score_GNB))
-    print(k + " Accuracy GNB: " + str(acc_GNB))
-    print()
-
-=======
-    # Reshape
-    trainY = trainY.to_numpy().reshape(-1, 1)
-    trainX = trainX.to_numpy().reshape(-1, 1)
-    testY = testY.to_numpy().reshape(-1, 1)
-    testX = testX.to_numpy().reshape(-1, 1)
-
-    # Normalize
-    #gen_trainX, mean, std = normalize_train(trainX)
-    #gen_testX = normalize_test(testX, mean, std)
-
-    # Neural Model
-    model_ner.fit(trainX, trainY.ravel())
-    predict_ner = model_ner.predict(testX)
-
     # GNB Model
     model_GNB.fit(trainX, trainY.ravel())
     predict_GNB = model_GNB.predict(testX)
@@ -456,7 +367,6 @@ for k in titl:
     print(k + " Accuracy GNB: " + str(acc_GNB))
     print()
 
->>>>>>> cf7c9209de4659528f70ab2651daa25f33e6b054
     # Prints Results of SVC
     print(k + " AUC ROC Score SVC: " + str(auc_score_SVC))
     print(k + " Accuracy SVC: " + str(acc_SVC))
